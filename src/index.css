@@ -1,0 +1,187 @@
+@import "tailwindcss";
+
+/* Phonic design tokens
+   Plum base, sand text, one marigold accent (the label on the record). */
+@theme {
+  --font-display: "Unbounded", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+
+  --color-plum-950: #150c1d;
+  --color-plum-900: #1e1129;
+  --color-plum-800: #2a1a39;
+  --color-plum-700: #3b2850;
+  --color-plum-600: #503868;
+
+  --color-sand-100: #f4ecdd;
+  --color-sand-300: #cfc3cf;
+  --color-sand-500: #9a8aa8;
+
+  --color-marigold-300: #fbd073;
+  --color-marigold-400: #f6b93b;
+  --color-marigold-500: #e9a21c;
+
+  --color-hibiscus-400: #f0707a;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    background: var(--color-plum-950);
+    color: var(--color-sand-100);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-marigold-400);
+    outline-offset: 3px;
+  }
+  ::selection {
+    background: var(--color-marigold-400);
+    color: var(--color-plum-950);
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+@layer components {
+/* ---------- Record ---------- */
+.vinyl {
+  position: relative;
+  border-radius: 9999px;
+  background:
+    repeating-radial-gradient(circle at 50% 50%, #1b1027 0 1.5px, #2b1b3b 1.5px 3px);
+  box-shadow:
+    inset 0 0 0 2px rgb(255 255 255 / 0.07),
+    0 24px 40px -12px rgb(0 0 0 / 0.6);
+}
+.vinyl::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 20deg,
+    transparent 0 18%,
+    rgb(255 255 255 / 0.13) 25%,
+    transparent 32% 68%,
+    rgb(255 255 255 / 0.13) 75%,
+    transparent 82%
+  );
+}
+.spin {
+  animation: spin 5s linear infinite;
+}
+.spin.is-paused {
+  animation-play-state: paused;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Equaliser ---------- */
+.eq {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+.eq span {
+  display: block;
+  width: 3px;
+  height: 100%;
+  background: currentColor;
+  border-radius: 1px;
+  transform-origin: bottom;
+  animation: eq 900ms ease-in-out infinite;
+}
+.eq span:nth-child(2) {
+  animation-delay: -300ms;
+}
+.eq span:nth-child(3) {
+  animation-delay: -600ms;
+}
+.eq.is-paused span {
+  animation-play-state: paused;
+  transform: scaleY(0.35);
+}
+@keyframes eq {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* ---------- Range sliders (seek + volume) ---------- */
+.range {
+  --pct: 0%;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+}
+.range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--color-marigold-400) var(--pct),
+    rgb(244 236 221 / 0.18) var(--pct)
+  );
+}
+.range::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgb(244 236 221 / 0.18);
+}
+.range::-moz-range-progress {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-marigold-400);
+}
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-sand-100);
+}
+.range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-sand-100);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin,
+  .eq span {
+    animation: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}

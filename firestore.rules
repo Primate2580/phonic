@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Only this account can add or remove songs.
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'primate2580@gmail.com';
+    }
+
+    // Signed-in users can listen; only the admin can publish.
+    match /songs/{songId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Everyone can read and edit only their own profile.
+    match /users/{uid} {
+      allow read, create, update: if request.auth != null && request.auth.uid == uid;
+      allow delete: if false;
+    }
+  }
+}
