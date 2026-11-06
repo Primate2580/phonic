@@ -25,10 +25,19 @@ export function PlayerProvider({ children }) {
   const [shuffle, setShuffle] = useState(false);
   const [repeat, setRepeat] = useState(false);
   const [playError, setPlayError] = useState("");
+  // null = play through the whole library; otherwise an ordered list of song ids
+  // (a playlist, or the liked songs).
+  const [queueIds, setQueueIds] = useState(null);
 
   // Latest values for callbacks that must stay stable (audio event handlers).
   const latest = useRef({});
-  latest.current = { songs, currentId, shuffle, repeat };
+  latest.current = { songs, currentId, shuffle, repeat, queueIds };
+
+  const getQueue = () => {
+    const { songs: all, queueIds: ids } = latest.current;
+    if (!ids) return all;
+    return ids.map((id) => all.find((s) => s.id === id)).filter(Boolean);
+  };
 
   // ---- Songs (live from Firestore) ----
   const uid = user?.uid;
@@ -71,6 +80,7 @@ export function PlayerProvider({ children }) {
     setTime(0);
     setDuration(0);
     setPlayError("");
+    setQueueIds(null);
   }, [uid, audio]);
 
   // ---- Core controls ----
@@ -96,7 +106,8 @@ export function PlayerProvider({ children }) {
 
   const step = useCallback(
     (dir) => {
-      const { songs: list, currentId: id, shuffle: shuf } = latest.current;
+      const { currentId: id, shuffle: shuf } = latest.current;
+      const list = getQueue();
       if (!list.length) return;
       const idx = list.findIndex((s) => s.id === id);
       let n;
@@ -113,8 +124,9 @@ export function PlayerProvider({ children }) {
   );
 
   const toggle = useCallback(() => {
-    const { songs: list, currentId: id } = latest.current;
+    const { currentId: id } = latest.current;
     if (!id) {
+      const list = getQueue();
       if (list.length) startSong(list[0]);
       return;
     }
@@ -125,14 +137,18 @@ export function PlayerProvider({ children }) {
     }
   }, [audio, startSong]);
 
+  // play(songId)        plays within the whole library
+  // play(songId, songs) plays within that list (a playlist, the liked songs...)
   const play = useCallback(
-    (songId) => {
-      const { songs: list, currentId: id } = latest.current;
+    (songId, queue) => {
+      const { songs: all, currentId: id } = latest.current;
       if (songId === id) {
+        if (queue) setQueueIds(queue.map((s) => s.id));
         toggle();
         return;
       }
-      const song = list.find((s) => s.id === songId);
+      setQueueIds(queue ? queue.map((s) => s.id) : null);
+      const song = all.find((s) => s.id === songId);
       if (song) startSong(song);
     },
     [startSong, toggle],

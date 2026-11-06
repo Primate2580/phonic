@@ -2,6 +2,7 @@ import { Pause, Play, Repeat, Shuffle, SkipBack, SkipForward, Volume2, VolumeX }
 import { usePlayer, usePlayerTime } from "../context/PlayerContext";
 import { formatTime } from "../lib/format";
 import Cover from "./Cover";
+import { LikeButton } from "./TrackActions";
 
 function IconButton({ label, active = false, className = "", children, ...props }) {
   return (
@@ -44,6 +45,7 @@ export default function PlayerBar() {
               {playError || (idle ? "Pick a track to start" : currentSong.artist)}
             </p>
           </div>
+          {!idle && <LikeButton songId={currentSong.id} title={currentSong.title} className="shrink-0" />}
         </div>
 
         {/* Controls + seek */}

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { House, LogOut, ShieldCheck } from "lucide-react";
+import { Heart, House, ListMusic, LogOut, ShieldCheck } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useLibrary } from "../context/LibraryContext";
 import AvatarModal from "./AvatarModal";
 import Logo from "./Logo";
 import PlayerBar from "./PlayerBar";
@@ -40,6 +41,7 @@ function NavItem({ to, icon: Icon, children }) {
 
 export default function AppShell() {
   const { displayName, photoURL, isAdmin, logout, profile } = useAuth();
+  const { playlists } = useLibrary();
   const [avatarOpen, setAvatarOpen] = useState(false);
 
   // Offer a profile photo once per session, after we know the profile has none.
@@ -72,10 +74,34 @@ export default function AppShell() {
           </div>
           <nav className="mt-6 flex flex-col gap-1" aria-label="Main">
             <NavItem to="/home" icon={House}>Listen</NavItem>
+            <NavItem to="/liked" icon={Heart}>Liked songs</NavItem>
+            <NavItem to="/playlists" icon={ListMusic}>Playlists</NavItem>
             {isAdmin && (
               <NavItem to="/admin" icon={ShieldCheck}>Manage tracks</NavItem>
             )}
           </nav>
+
+          {playlists.length > 0 && (
+            <div className="no-scrollbar mt-4 min-h-0 flex-1 overflow-y-auto border-t border-plum-800 pt-3">
+              <ul className="space-y-0.5">
+                {playlists.map((pl) => (
+                  <li key={pl.id}>
+                    <NavLink
+                      to={`/playlists/${pl.id}`}
+                      className={({ isActive }) =>
+                        `block truncate rounded-lg px-3 py-1.5 text-sm transition-colors ${
+                          isActive ? "text-marigold-400" : "text-sand-500 hover:text-sand-100"
+                        }`
+                      }
+                    >
+                      {pl.name}
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="mt-auto flex items-center gap-3 rounded-xl bg-plum-800/60 p-3">
             <Avatar src={photoURL} name={displayName} onClick={() => setAvatarOpen(true)} />
             <div className="min-w-0 flex-1">
@@ -103,6 +129,26 @@ export default function AppShell() {
               <Avatar src={photoURL} name={displayName} onClick={() => setAvatarOpen(true)} />
             </div>
           </header>
+
+          <nav className="flex gap-2 overflow-x-auto border-b border-plum-800 px-4 py-2 md:hidden no-scrollbar" aria-label="Main">
+            {[
+              ["/home", "Listen"],
+              ["/liked", "Liked"],
+              ["/playlists", "Playlists"],
+            ].map(([to, label]) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) =>
+                  `shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                    isActive ? "bg-marigold-400 text-plum-950" : "bg-plum-800 text-sand-300"
+                  }`
+                }
+              >
+                {label}
+              </NavLink>
+            ))}
+          </nav>
 
           <main className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
             <Outlet />
