@@ -40,9 +40,10 @@ export function uploadImage(file, { folder, onProgress } = {}) {
 /**
  * Upload an audio file to Cloudflare R2 through your worker.
  * `token` is the signed-in admin's Firebase ID token; the worker rejects uploads without it.
+ * `folder` must start with "songs" because the worker only accepts keys under songs/.
  * Resolves with the public URL.
  */
-export function uploadAudio(file, { token, onProgress } = {}) {
+export function uploadAudio(file, { token, folder = "songs", onProgress } = {}) {
   return new Promise((resolve, reject) => {
     if (!token) {
       reject(new Error("You need to be logged in as the admin to upload audio."));
@@ -50,7 +51,7 @@ export function uploadAudio(file, { token, onProgress } = {}) {
     }
 
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const key = `songs/${Date.now()}_${safeName}`;
+    const key = `${folder}/${Date.now()}_${safeName}`;
 
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", `${WORKER_URL}/${key}`);

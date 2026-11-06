@@ -64,3 +64,9 @@ export function authMessage(error) {
       return "Something went wrong. Try again.";
   }
 }
+
+export function formatDate(value) {
+  const ms = toMillis(value);
+  if (!ms) return "";
+  return new Date(ms).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+}

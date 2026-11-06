@@ -1,4 +1,4 @@
-export default function Logo({ size = "md" }) {
+export default function Logo({ size = "md", compact = false }) {
   const dims = size === "lg" ? "h-9 w-9" : "h-7 w-7";
   const text = size === "lg" ? "text-3xl" : "text-xl";
   return (
@@ -10,7 +10,7 @@ export default function Logo({ size = "md" }) {
         <circle cx="32" cy="32" r="7" fill="#f6b93b" />
         <circle cx="32" cy="32" r="1.8" fill="#150c1d" />
       </svg>
-      <span className={`font-display font-semibold tracking-tight ${text}`}>Phonic</span>
+      <span className={compact ? "sr-only" : `font-display font-semibold tracking-tight ${text}`}>Phonic</span>
     </span>
   );
 }

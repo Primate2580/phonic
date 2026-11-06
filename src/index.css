@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Landscape phones are wide but only ~350px tall. These variants let the layout
+   react to HEIGHT, not just width. */
+@custom-variant short (@media (max-height: 520px));
+@custom-variant tall (@media (min-height: 521px));
+
 /* Phonic design tokens
    Plum base, sand text, one marigold accent (the label on the record). */
 @theme {
@@ -87,6 +92,45 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+@layer components {
+/* ---------- Player bar layout ----------
+   portrait phone : info / seek / controls stacked
+   desktop        : info | controls over seek | volume
+   short screens  : one compact row (landscape phones) */
+.player {
+  display: grid;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "info"
+    "seek"
+    "controls";
+}
+.player-info { grid-area: info; }
+.player-seek { grid-area: seek; }
+.player-controls { grid-area: controls; }
+.player-volume { grid-area: volume; display: none; }
+
+@media (min-width: 768px) and (min-height: 521px) {
+  .player {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 2fr) minmax(0, 1fr);
+    grid-template-areas:
+      "info controls volume"
+      "info seek volume";
+  }
+  .player-volume { display: flex; }
+}
+@media (max-height: 520px) {
+  .player {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.4fr);
+    grid-template-areas: "info controls seek";
+    gap: 0 1rem;
+  }
+  .player-volume { display: none; }
+}
 }
 
 /* ---------- Equaliser ---------- */

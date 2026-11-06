@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Pause, Play, Search } from "lucide-react";
+import CategoryChips from "../components/CategoryChips";
 import Cover from "../components/Cover";
 import SongCard from "../components/SongCard";
 import { useAuth } from "../context/AuthContext";
@@ -65,14 +66,21 @@ export default function Home() {
   const { displayName, isAdmin } = useAuth();
   const { songs, songsLoading, songsError, currentSong, isPlaying, play } = usePlayer();
   const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("");
+
+  const categories = useMemo(
+    () => [...new Set(songs.map((s) => (s.category || "").trim()).filter(Boolean))].sort(),
+    [songs],
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return songs;
-    return songs.filter((s) =>
-      [s.title, s.artist, s.album].some((field) => (field || "").toLowerCase().includes(q)),
+    return songs.filter(
+      (s) =>
+        (!category || (s.category || "").trim() === category) &&
+        (!q || [s.title, s.artist, s.album].some((field) => (field || "").toLowerCase().includes(q))),
     );
-  }, [songs, query]);
+  }, [songs, query, category]);
 
   const featured = currentSong || songs[0];
 
@@ -106,6 +114,10 @@ export default function Home() {
           </div>
         </div>
 
+        <div className="mt-4">
+          <CategoryChips categories={categories} value={category} onChange={setCategory} label="Filter songs by category" />
+        </div>
+
         <div className="mt-6">
           {songsLoading ? (
             <SkeletonGrid />
@@ -121,7 +133,7 @@ export default function Home() {
                   <>
                     Upload the first track from{" "}
                     <Link to="/admin" className="font-semibold text-marigold-400 hover:text-marigold-300">
-                      Manage tracks
+                      Manage content
                     </Link>
                     .
                   </>
@@ -132,7 +144,7 @@ export default function Home() {
             </div>
           ) : filtered.length === 0 ? (
             <p className="py-10 text-center text-sand-300">
-              Nothing matches “{query}”. Try a different title or artist.
+              Nothing matches{query ? ` “${query}”` : ""}{category ? ` in ${category}` : ""}. Try a different search.
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">

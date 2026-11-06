@@ -1,7 +1,9 @@
 import { fallbackCover } from "../lib/format";
 
 export default function Cover({ song, className = "", ...rest }) {
-  const fallback = fallbackCover(song?.title || song?.id || "phonic");
+  // Episodes without their own cover use the show's colour, so they match the show's artwork.
+  const seed = song?.kind === "episode" ? song.album || song.title : song?.title || song?.id;
+  const fallback = fallbackCover(seed || "phonic");
   return (
     <img
       src={song?.coverURL || fallback}

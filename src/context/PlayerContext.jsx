@@ -3,6 +3,7 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { toMillis } from "../lib/format";
 import { useAuth } from "./AuthContext";
+import { usePodcasts } from "./PodcastContext";
 
 const PlayerContext = createContext(null);
 // Playback time changes ~4x a second, so it lives in its own context
@@ -11,6 +12,7 @@ const TimeContext = createContext({ time: 0, duration: 0 });
 
 export function PlayerProvider({ children }) {
   const { user } = useAuth();
+  const { episodes } = usePodcasts();
   const [audio] = useState(() => new Audio());
 
   const [songs, setSongs] = useState([]);
@@ -29,14 +31,18 @@ export function PlayerProvider({ children }) {
   // (a playlist, or the liked songs).
   const [queueIds, setQueueIds] = useState(null);
 
+  // Everything the player can play. `songs` stays songs only, which is what
+  // "play through the library" uses.
+  const catalog = useMemo(() => [...songs, ...episodes], [songs, episodes]);
+
   // Latest values for callbacks that must stay stable (audio event handlers).
   const latest = useRef({});
-  latest.current = { songs, currentId, shuffle, repeat, queueIds };
+  latest.current = { songs, catalog, currentId, shuffle, repeat, queueIds };
 
   const getQueue = () => {
-    const { songs: all, queueIds: ids } = latest.current;
+    const { songs: all, catalog: everything, queueIds: ids } = latest.current;
     if (!ids) return all;
-    return ids.map((id) => all.find((s) => s.id === id)).filter(Boolean);
+    return ids.map((id) => everything.find((s) => s.id === id)).filter(Boolean);
   };
 
   // ---- Songs (live from Firestore) ----
@@ -141,7 +147,7 @@ export function PlayerProvider({ children }) {
   // play(songId, songs) plays within that list (a playlist, the liked songs...)
   const play = useCallback(
     (songId, queue) => {
-      const { songs: all, currentId: id } = latest.current;
+      const { catalog: all, currentId: id } = latest.current;
       if (songId === id) {
         if (queue) setQueueIds(queue.map((s) => s.id));
         toggle();
@@ -224,7 +230,7 @@ export function PlayerProvider({ children }) {
     };
   }, [audio, step]);
 
-  const currentSong = useMemo(() => songs.find((s) => s.id === currentId) || null, [songs, currentId]);
+  const currentSong = useMemo(() => catalog.find((s) => s.id === currentId) || null, [catalog, currentId]);
 
   // ---- Lock-screen / headphone controls ----
   useEffect(() => {

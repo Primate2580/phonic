@@ -47,7 +47,7 @@ export default function AvatarModal({ onClose }) {
       aria-labelledby="avatar-title"
       onMouseDown={(e) => e.target === e.currentTarget && !busy && onClose()}
     >
-      <div className="w-full max-w-sm rounded-2xl border border-plum-700 bg-plum-900 p-6 text-center shadow-2xl">
+      <div className="w-full max-w-sm rounded-2xl border border-plum-700 bg-plum-900 p-6 text-center shadow-2xl max-h-[92dvh] overflow-y-auto">
         <div className="flex justify-end">
           <button type="button" onClick={onClose} disabled={busy} aria-label="Close" className="text-sand-500 hover:text-sand-100">
             <X className="h-5 w-5" />

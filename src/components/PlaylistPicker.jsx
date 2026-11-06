@@ -55,7 +55,7 @@ export default function PlaylistPicker({ song, onClose }) {
       aria-labelledby="picker-title"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full max-w-sm rounded-2xl border border-plum-700 bg-plum-900 p-5 shadow-2xl">
+      <div className="w-full max-w-sm rounded-2xl border border-plum-700 bg-plum-900 p-5 shadow-2xl max-h-[92dvh] overflow-y-auto">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <h2 id="picker-title" className="font-display text-lg font-semibold">Add to playlist</h2>
