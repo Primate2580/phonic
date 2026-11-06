@@ -6,6 +6,8 @@ import { PlayerProvider } from "./context/PlayerContext";
 import AppShell from "./components/AppShell";
 import { PublicOnly, RequireAdmin, RequireAuth } from "./components/Routes";
 import Admin from "./pages/Admin";
+import AlbumPage from "./pages/AlbumPage";
+import ArtistPage from "./pages/ArtistPage";
 import Browse from "./pages/Browse";
 import CategoryPage from "./pages/CategoryPage";
 import Home from "./pages/Home";
@@ -40,6 +42,8 @@ export default function App() {
                 <Route path="/liked" element={<Liked />} />
                 <Route path="/library" element={<Library />} />
                 <Route path="/browse" element={<Browse />} />
+                <Route path="/artists/:artist" element={<ArtistPage />} />
+                <Route path="/albums/:artist/:album" element={<AlbumPage />} />
                 <Route path="/browse/:type/:category" element={<CategoryPage />} />
                 <Route path="/podcasts" element={<Podcasts />} />
                 <Route path="/podcasts/:showId" element={<ShowDetail />} />

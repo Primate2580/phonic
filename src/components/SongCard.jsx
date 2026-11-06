@@ -1,5 +1,7 @@
 import { memo } from "react";
+import { Link } from "react-router-dom";
 import { Pause, Play } from "lucide-react";
+import { artistPath } from "../lib/catalog";
 import Cover from "./Cover";
 import { AddToPlaylistButton, LikeButton } from "./TrackActions";
 
@@ -29,20 +31,32 @@ function SongCard({ song, isCurrent, isPlaying, onPlay }) {
             </span>
           </div>
         </div>
-        <div className="mt-3 flex items-start gap-2">
-          <div className="min-w-0 flex-1">
-            <p className={`truncate text-sm font-semibold ${isCurrent ? "text-marigold-400" : ""}`}>{song.title}</p>
-            <p className="truncate text-sm text-sand-500">{song.artist}</p>
-          </div>
-          {isCurrent && (
-            <span className={`eq mt-1 text-marigold-400 ${isPlaying ? "" : "is-paused"}`} aria-hidden="true">
-              <span />
-              <span />
-              <span />
-            </span>
-          )}
-        </div>
       </button>
+
+      <div className="mt-3 flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          {/* Clicking the title plays too (mouse convenience); the cover button above is the accessible one. */}
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-hidden="true"
+            onClick={() => onPlay(song.id)}
+            className={`block max-w-full truncate text-left text-sm font-semibold ${isCurrent ? "text-marigold-400" : ""}`}
+          >
+            {song.title}
+          </button>
+          <Link to={artistPath(song.artist)} className="block truncate text-sm text-sand-500 hover:text-marigold-400 hover:underline">
+            {song.artist}
+          </Link>
+        </div>
+        {isCurrent && (
+          <span className={`eq mt-1 text-marigold-400 ${isPlaying ? "" : "is-paused"}`} aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+        )}
+      </div>
 
       {/* Sit on top of the cover, top-right. Siblings of the play button, so no nested buttons. */}
       <div className="absolute right-1.5 top-1.5 flex gap-1">

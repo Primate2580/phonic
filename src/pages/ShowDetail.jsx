@@ -8,7 +8,7 @@ import { usePodcasts } from "../context/PodcastContext";
 
 export default function ShowDetail() {
   const { showId } = useParams();
-  const { showsById, episodes, ready, followedIds, toggleFollow } = usePodcasts();
+  const { showsById, episodes, ready, followedIds, toggleFollow, progressById } = usePodcasts();
   const { currentSong, isPlaying, play } = usePlayer();
 
   const show = showsById.get(showId);
@@ -77,7 +77,7 @@ export default function ShowDetail() {
       ) : (
         <ul className="mt-3 divide-y divide-plum-800">
           {eps.map((ep) => (
-            <EpisodeRow key={ep.id} episode={ep} isCurrent={currentSong?.id === ep.id} isPlaying={isPlaying} onPlay={(e) => play(e.id, eps)} />
+            <EpisodeRow key={ep.id} episode={ep} progress={progressById.get(ep.rawId)} isCurrent={currentSong?.id === ep.id} isPlaying={isPlaying} onPlay={(e) => play(e.id, eps)} />
           ))}
         </ul>
       )}

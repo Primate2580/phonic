@@ -8,6 +8,7 @@ import { useAuth } from "./AuthContext";
  * shows/{id}                    -> { title, host, description, category, coverURL, createdAt }
  * episodes/{id}                 -> { showId, title, description, mp3URL, coverURL, publishedAt }
  * users/{uid}/follows/{showId}  -> { showId, followedAt }
+ * users/{uid}/progress/{episodeId} -> { episodeId, showId, position, duration, completed, updatedAt }
  *
  * Episodes are exposed as "tracks" shaped like songs (kind: "episode") so the same
  * player can play them. Their ids are prefixed with "ep_" so they never clash with song ids.
@@ -22,6 +23,7 @@ export function PodcastProvider({ children }) {
   const [shows, setShows] = useState([]);
   const [rawEpisodes, setRawEpisodes] = useState([]);
   const [follows, setFollows] = useState([]);
+  const [progress, setProgress] = useState([]);
   const [ready, setReady] = useState({ shows: false, episodes: false });
   const [error, setError] = useState("");
 
@@ -30,6 +32,7 @@ export function PodcastProvider({ children }) {
       setShows([]);
       setRawEpisodes([]);
       setFollows([]);
+      setProgress([]);
       setReady({ shows: false, episodes: false });
       setError("");
       return undefined;
@@ -62,10 +65,16 @@ export function PodcastProvider({ children }) {
       (snap) => setFollows(snap.docs.map(read).sort((a, b) => toMillis(b.followedAt) - toMillis(a.followedAt))),
       (err) => console.error("Could not load followed shows:", err),
     );
+    const unsubProgress = onSnapshot(
+      collection(db, "users", uid, "progress"),
+      (snap) => setProgress(snap.docs.map(read)),
+      (err) => console.error("Could not load listening progress:", err),
+    );
     return () => {
       unsubShows();
       unsubEpisodes();
       unsubFollows();
+      unsubProgress();
     };
   }, [uid]);
 
@@ -111,6 +120,40 @@ export function PodcastProvider({ children }) {
     [uid, followedIds],
   );
 
+  const progressById = useMemo(() => new Map(progress.map((p) => [p.episodeId || p.id, p])), [progress]);
+
+  // Episodes the listener started but hasn't finished, most recently played first.
+  const continueListening = useMemo(() => {
+    const byRawId = new Map(episodes.map((e) => [e.rawId, e]));
+    return progress
+      .filter((p) => !p.completed && p.position > 5 && byRawId.has(p.episodeId || p.id))
+      .sort((a, b) => toMillis(b.updatedAt) - toMillis(a.updatedAt))
+      .map((p) => ({ episode: byRawId.get(p.episodeId || p.id), progress: p }));
+  }, [progress, episodes]);
+
+  const saveProgress = useCallback(
+    async (episode, position, duration, completed = false) => {
+      if (!uid || !episode?.rawId) return;
+      try {
+        await setDoc(
+          doc(db, "users", uid, "progress", episode.rawId),
+          {
+            episodeId: episode.rawId,
+            showId: episode.showId,
+            position: Math.max(0, Math.floor(position)),
+            duration: Math.max(0, Math.floor(duration)),
+            completed,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true },
+        );
+      } catch (err) {
+        console.warn("Could not save listening progress:", err);
+      }
+    },
+    [uid],
+  );
+
   const value = useMemo(
     () => ({
       shows,
@@ -121,8 +164,11 @@ export function PodcastProvider({ children }) {
       ready: ready.shows && ready.episodes,
       error,
       toggleFollow,
+      progressById,
+      continueListening,
+      saveProgress,
     }),
-    [shows, showsById, episodes, follows, followedIds, ready, error, toggleFollow],
+    [shows, showsById, episodes, follows, followedIds, ready, error, toggleFollow, progressById, continueListening, saveProgress],
   );
 
   return <PodcastContext.Provider value={value}>{children}</PodcastContext.Provider>;

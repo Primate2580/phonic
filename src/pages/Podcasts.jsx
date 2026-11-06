@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import CategoryChips from "../components/CategoryChips";
+import ContinueListening from "../components/ContinueListening";
 import EpisodeRow from "../components/EpisodeRow";
 import ShowCard from "../components/ShowCard";
 import { usePlayer } from "../context/PlayerContext";
 import { usePodcasts } from "../context/PodcastContext";
 
 export default function Podcasts() {
-  const { shows, episodes, ready, error } = usePodcasts();
+  const { shows, episodes, ready, error, progressById } = usePodcasts();
   const { currentSong, isPlaying, play } = usePlayer();
   const [category, setCategory] = useState("");
 
@@ -34,6 +35,7 @@ export default function Podcasts() {
         </div>
       ) : (
         <>
+          <ContinueListening className="mt-8" />
           {latest.length > 0 && (
             <section className="mt-8" aria-labelledby="latest-eps">
               <h2 id="latest-eps" className="font-display text-xl font-semibold">New episodes</h2>
@@ -42,6 +44,7 @@ export default function Podcasts() {
                   <EpisodeRow
                     key={ep.id}
                     episode={ep}
+                    progress={progressById.get(ep.rawId)}
                     showName
                     isCurrent={currentSong?.id === ep.id}
                     isPlaying={isPlaying}

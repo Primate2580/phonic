@@ -2,8 +2,10 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Pause, Play, Search } from "lucide-react";
 import CategoryChips from "../components/CategoryChips";
+import ContinueListening from "../components/ContinueListening";
 import Cover from "../components/Cover";
 import SongCard from "../components/SongCard";
+import { albumPath, artistPath } from "../lib/catalog";
 import { useAuth } from "../context/AuthContext";
 import { usePlayer } from "../context/PlayerContext";
 import { greeting } from "../lib/format";
@@ -32,8 +34,19 @@ function NowSpinning({ song, isCurrent, isPlaying, onPlay }) {
         <p className="text-sm text-sand-500">{isCurrent ? (isPlaying ? "Playing now" : "Paused") : "Newest in the library"}</p>
         <h2 className="mt-1 break-words font-display text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{song.title}</h2>
         <p className="mt-2 text-lg text-sand-300">
-          {song.artist}
-          {song.album ? <span className="text-sand-500"> on {song.album}</span> : null}
+          {song.kind === "episode" ? (
+            <Link to={`/podcasts/${song.showId}`} className="hover:text-marigold-400 hover:underline">{song.album || song.artist}</Link>
+          ) : (
+            <>
+              <Link to={artistPath(song.artist)} className="hover:text-marigold-400 hover:underline">{song.artist}</Link>
+              {song.album ? (
+                <span className="text-sand-500">
+                  {" "}on{" "}
+                  <Link to={albumPath(song.artist, song.album)} className="hover:text-marigold-400 hover:underline">{song.album}</Link>
+                </span>
+              ) : null}
+            </>
+          )}
         </p>
         <button
           type="button"
@@ -95,6 +108,8 @@ export default function Home() {
           <NowSpinning song={featured} isCurrent={currentSong?.id === featured.id} isPlaying={isPlaying} onPlay={play} />
         </div>
       )}
+
+      <ContinueListening className="mt-12" />
 
       <section className="mt-12" aria-labelledby="library-title">
         <div className="flex flex-wrap items-center justify-between gap-4">

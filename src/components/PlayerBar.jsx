@@ -1,6 +1,8 @@
 import { Pause, Play, Repeat, Shuffle, SkipBack, SkipForward, Volume2, VolumeX } from "lucide-react";
 import { usePlayer, usePlayerTime } from "../context/PlayerContext";
 import { formatTime } from "../lib/format";
+import { Link } from "react-router-dom";
+import { artistPath } from "../lib/catalog";
 import Cover from "./Cover";
 import { LikeButton } from "./TrackActions";
 
@@ -53,7 +55,18 @@ export default function PlayerBar() {
           <div className="min-w-0 flex-1 md:max-w-[16rem] md:flex-none" aria-live="polite">
             <p className="truncate text-sm font-semibold">{idle ? "Nothing playing" : currentSong.title}</p>
             <p className={`truncate text-xs ${playError ? "text-hibiscus-400" : "text-sand-500"}`}>
-              {playError || (idle ? "Pick a track to start" : currentSong.artist)}
+              {playError ? (
+                playError
+              ) : idle ? (
+                "Pick a track to start"
+              ) : (
+                <Link
+                  to={currentSong.kind === "episode" ? `/podcasts/${currentSong.showId}` : artistPath(currentSong.artist)}
+                  className="hover:text-marigold-400 hover:underline"
+                >
+                  {currentSong.kind === "episode" ? currentSong.album || currentSong.artist : currentSong.artist}
+                </Link>
+              )}
             </p>
           </div>
           {!idle && currentSong.kind !== "episode" && <LikeButton songId={currentSong.id} title={currentSong.title} className="shrink-0" />}

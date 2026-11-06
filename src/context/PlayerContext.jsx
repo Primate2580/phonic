@@ -12,7 +12,7 @@ const TimeContext = createContext({ time: 0, duration: 0 });
 
 export function PlayerProvider({ children }) {
   const { user } = useAuth();
-  const { episodes } = usePodcasts();
+  const { episodes, progressById, saveProgress } = usePodcasts();
   const [audio] = useState(() => new Audio());
 
   const [songs, setSongs] = useState([]);
@@ -38,6 +38,15 @@ export function PlayerProvider({ children }) {
   // Latest values for callbacks that must stay stable (audio event handlers).
   const latest = useRef({});
   latest.current = { songs, catalog, currentId, shuffle, repeat, queueIds };
+
+  // Podcast resume: refs so the audio event handlers always see current values.
+  const progressRef = useRef(progressById);
+  progressRef.current = progressById;
+  const saveRef = useRef(saveProgress);
+  saveRef.current = saveProgress;
+  const pendingSeek = useRef(0); // seconds to jump to once the episode's metadata has loaded
+  const lastSaved = useRef(0);
+  const episodeActive = useRef(false);
 
   const getQueue = () => {
     const { songs: all, catalog: everything, queueIds: ids } = latest.current;
@@ -89,6 +98,23 @@ export function PlayerProvider({ children }) {
     setQueueIds(null);
   }, [uid, audio]);
 
+  // ---- Remember where the listener stopped in a podcast episode ----
+  const persist = useCallback(
+    (finished = false) => {
+      if (!episodeActive.current) return;
+      const { catalog: all, currentId: id } = latest.current;
+      const ep = all.find((s) => s.id === id);
+      const dur = audio.duration;
+      if (!ep || ep.kind !== "episode" || !Number.isFinite(dur) || dur <= 0) return;
+      const pos = audio.currentTime;
+      if (!finished && pos < 5) return;
+      const completed = finished || pos >= dur - 10;
+      saveRef.current(ep, completed ? 0 : pos, dur, completed);
+      lastSaved.current = Date.now();
+    },
+    [audio],
+  );
+
   // ---- Core controls ----
   const startSong = useCallback(
     (song) => {
@@ -96,6 +122,14 @@ export function PlayerProvider({ children }) {
         setPlayError("This track has no audio file attached.");
         return;
       }
+      persist(); // save the episode we're leaving, if it was one
+      const saved = song.kind === "episode" ? progressRef.current.get(song.rawId) : null;
+      pendingSeek.current =
+        saved && !saved.completed && saved.position > 5 && (!saved.duration || saved.position < saved.duration - 10)
+          ? saved.position
+          : 0;
+      episodeActive.current = song.kind === "episode";
+      lastSaved.current = Date.now();
       audio.src = song.mp3URL;
       setCurrentId(song.id);
       setTime(0);
@@ -107,7 +141,7 @@ export function PlayerProvider({ children }) {
         }
       });
     },
-    [audio],
+    [audio, persist],
   );
 
   const step = useCallback(
@@ -195,10 +229,25 @@ export function PlayerProvider({ children }) {
       setIsPlaying(true);
       setPlayError("");
     };
-    const onPause = () => setIsPlaying(false);
-    const onTime = () => setTime(audio.currentTime);
-    const onMeta = () => setDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
+    const onPause = () => {
+      setIsPlaying(false);
+      persist();
+    };
+    const onTime = () => {
+      setTime(audio.currentTime);
+      if (episodeActive.current && Date.now() - lastSaved.current >= 15000) persist();
+    };
+    const onMeta = () => {
+      const d = Number.isFinite(audio.duration) ? audio.duration : 0;
+      setDuration(d);
+      if (d > 0 && pendingSeek.current > 0) {
+        audio.currentTime = Math.min(pendingSeek.current, d - 1);
+        setTime(audio.currentTime);
+        pendingSeek.current = 0;
+      }
+    };
     const onEnded = () => {
+      persist(true);
       if (latest.current.repeat) {
         audio.currentTime = 0;
         audio.play().catch(() => {});
@@ -228,7 +277,22 @@ export function PlayerProvider({ children }) {
       audio.removeEventListener("ended", onEnded);
       audio.removeEventListener("error", onError);
     };
-  }, [audio, step]);
+  }, [audio, step, persist]);
+
+  // Save when the tab is hidden or closed, which is when phones usually kill the page.
+  useEffect(() => {
+    // Wrapped on purpose: an event object must not be passed to persist() as its `finished` flag.
+    const onHide = () => {
+      if (document.visibilityState === "hidden") persist();
+    };
+    const onPageHide = () => persist();
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", onPageHide);
+    };
+  }, [persist]);
 
   const currentSong = useMemo(() => catalog.find((s) => s.id === currentId) || null, [catalog, currentId]);
 

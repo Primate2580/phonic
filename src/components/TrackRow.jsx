@@ -1,19 +1,23 @@
 import { memo } from "react";
+import { Link } from "react-router-dom";
 import { Pause, Play, X } from "lucide-react";
+import { albumPath, artistPath } from "../lib/catalog";
 import Cover from "./Cover";
 import { AddToPlaylistButton, LikeButton } from "./TrackActions";
+
+const linkClass = "truncate hover:text-marigold-400 hover:underline";
 
 function TrackRow({ song, isCurrent, isPlaying, onPlay, onRemove, removeLabel = "Remove" }) {
   const showPause = isCurrent && isPlaying;
   return (
     <li className="group flex items-center gap-2 rounded-xl px-2 py-1.5 transition-colors hover:bg-plum-800/60 focus-within:bg-plum-800/60">
-      <button
-        type="button"
-        onClick={() => onPlay(song)}
-        aria-label={`${showPause ? "Pause" : "Play"} ${song.title} by ${song.artist}`}
-        className="flex min-w-0 flex-1 items-center gap-4 text-left"
-      >
-        <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md">
+      <div className="flex min-w-0 flex-1 items-center gap-4">
+        <button
+          type="button"
+          onClick={() => onPlay(song)}
+          aria-label={`${showPause ? "Pause" : "Play"} ${song.title} by ${song.artist}`}
+          className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md"
+        >
           <Cover song={song} className="h-full w-full" />
           <span
             className={`absolute inset-0 grid place-items-center bg-plum-950/60 text-marigold-400 transition-opacity ${
@@ -22,13 +26,29 @@ function TrackRow({ song, isCurrent, isPlaying, onPlay, onRemove, removeLabel = 
           >
             {showPause ? <Pause className="h-5 w-5" fill="currentColor" /> : <Play className="h-5 w-5" fill="currentColor" />}
           </span>
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className={`block truncate font-medium ${isCurrent ? "text-marigold-400" : ""}`}>{song.title}</span>
-          <span className="block truncate text-sm text-sand-500">{song.artist}</span>
-        </span>
-        {song.album && <span className="hidden w-1/4 truncate text-sm text-sand-500 lg:block">{song.album}</span>}
-      </button>
+        </button>
+
+        <div className="min-w-0 flex-1">
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-hidden="true"
+            onClick={() => onPlay(song)}
+            className={`block max-w-full truncate text-left font-medium ${isCurrent ? "text-marigold-400" : ""}`}
+          >
+            {song.title}
+          </button>
+          <Link to={artistPath(song.artist)} className={`block text-sm text-sand-500 ${linkClass}`}>
+            {song.artist}
+          </Link>
+        </div>
+
+        {song.album && (
+          <Link to={albumPath(song.artist, song.album)} className={`hidden w-1/4 text-sm text-sand-500 lg:block ${linkClass}`}>
+            {song.album}
+          </Link>
+        )}
+      </div>
 
       <LikeButton songId={song.id} title={song.title} />
       <AddToPlaylistButton song={song} />
