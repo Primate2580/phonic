@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet } from "react-router-dom";
 import { Heart, House, ListMusic, LogOut, ShieldCheck } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useLibrary } from "../context/LibraryContext";
@@ -9,17 +9,16 @@ import PlayerBar from "./PlayerBar";
 
 const PROMPT_KEY = "phonic:avatar-prompt-dismissed";
 
-function Avatar({ src, name, onClick }) {
+function Avatar({ src, name }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label="Change profile photo"
-      title="Change profile photo"
+    <Link
+      to="/profile"
+      aria-label="Your profile"
+      title="Your profile"
       className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-plum-700 font-display text-sm font-semibold ring-1 ring-plum-600 transition hover:ring-marigold-400"
     >
       {src ? <img src={src} alt="" className="h-full w-full object-cover" /> : name.slice(0, 1).toUpperCase()}
-    </button>
+    </Link>
   );
 }
 
@@ -103,9 +102,9 @@ export default function AppShell() {
           )}
 
           <div className="mt-auto flex items-center gap-3 rounded-xl bg-plum-800/60 p-3">
-            <Avatar src={photoURL} name={displayName} onClick={() => setAvatarOpen(true)} />
+            <Avatar src={photoURL} name={displayName} />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{displayName}</p>
+              <Link to="/profile" className="block truncate text-sm font-semibold hover:text-marigold-400">{displayName}</Link>
               <button type="button" onClick={logout} className="flex items-center gap-1 text-xs text-sand-500 hover:text-sand-100">
                 <LogOut className="h-3 w-3" aria-hidden="true" /> Log out
               </button>
@@ -126,7 +125,7 @@ export default function AppShell() {
               <button type="button" onClick={logout} aria-label="Log out" className="grid h-10 w-10 place-items-center rounded-full text-sand-300 hover:text-sand-100">
                 <LogOut className="h-5 w-5" />
               </button>
-              <Avatar src={photoURL} name={displayName} onClick={() => setAvatarOpen(true)} />
+              <Avatar src={photoURL} name={displayName} />
             </div>
           </header>
 

@@ -10,6 +10,7 @@ import Landing from "./pages/Landing";
 import Liked from "./pages/Liked";
 import Login from "./pages/Login";
 import PlaylistDetail from "./pages/PlaylistDetail";
+import Profile from "./pages/Profile";
 import Playlists from "./pages/Playlists";
 import Signup from "./pages/Signup";
 
@@ -30,6 +31,7 @@ export default function App() {
               <Route element={<AppShell />}>
                 <Route path="/home" element={<Home />} />
                 <Route path="/liked" element={<Liked />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="/playlists" element={<Playlists />} />
                 <Route path="/playlists/:playlistId" element={<PlaylistDetail />} />
                 <Route element={<RequireAdmin />}>

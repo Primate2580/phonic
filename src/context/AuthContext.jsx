@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
@@ -95,6 +96,19 @@ export function AuthProvider({ children }) {
     setProfile((p) => ({ ...(p || {}), photoURL: url }));
   }, []);
 
+  const updateUsername = useCallback(async (username) => {
+    const current = auth.currentUser;
+    if (!current) throw new Error("Not signed in.");
+    await updateProfile(current, { displayName: username });
+    await setDoc(
+      doc(db, "users", current.uid),
+      { username, updatedAt: serverTimestamp() },
+      { merge: true },
+    );
+  }, []);
+
+  const resetPassword = useCallback((email) => sendPasswordResetEmail(auth, email), []);
+
   const value = useMemo(() => {
     const email = user?.email || "";
     return {
@@ -104,13 +118,17 @@ export function AuthProvider({ children }) {
       isAdmin: !!ADMIN_EMAIL && email.toLowerCase() === ADMIN_EMAIL,
       displayName: profile?.username || user?.displayName || email.split("@")[0] || "there",
       photoURL: profile?.photoURL || user?.photoURL || "",
+      providerIds: (user?.providerData || []).map((p) => p.providerId),
+      memberSince: user?.metadata?.creationTime ? new Date(user.metadata.creationTime) : null,
+      updateUsername,
+      resetPassword,
       signup,
       login,
       loginWithGoogle,
       logout,
       saveAvatar,
     };
-  }, [user, profile, initializing, signup, login, loginWithGoogle, logout, saveAvatar]);
+  }, [user, profile, initializing, signup, login, loginWithGoogle, logout, saveAvatar, updateUsername, resetPassword]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
