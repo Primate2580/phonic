@@ -4,7 +4,7 @@ import { FileAudio, ImagePlus, Trash2, Upload } from "lucide-react";
 import Cover from "../components/Cover";
 import Spinner from "../components/Spinner";
 import { usePlayer } from "../context/PlayerContext";
-import { db } from "../lib/firebase";
+import { auth, db } from "../lib/firebase";
 import { toMillis } from "../lib/format";
 import { uploadAudio, uploadImage } from "../lib/uploads";
 
@@ -70,9 +70,11 @@ export default function Admin() {
         setPct(0);
         coverURL = await uploadImage(coverFile, { folder: "covers", onProgress: setPct });
       }
+
       setStage("Uploading audio");
       setPct(0);
-      const mp3URL = await uploadAudio(audioFile, { onProgress: setPct });
+      const token = await auth.currentUser?.getIdToken();
+      const mp3URL = await uploadAudio(audioFile, { token, onProgress: setPct });
 
       setStage("Publishing");
       setPct(100);

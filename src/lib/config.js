@@ -14,7 +14,8 @@ export const cloudinary = {
   uploadPreset: env.VITE_CLOUDINARY_UPLOAD_PRESET,
 };
 
-export const WORKER_URL = (env.VITE_R2_WORKER_URL || "").replace(/\/$/, "");
+export const WORKER_URL = (env.VITE_R2_WORKER_URL || "").replace(/\/$/, ""); 
+// could it be this line above?
 export const ADMIN_EMAIL = (env.VITE_ADMIN_EMAIL || "").trim().toLowerCase();
 
 const required = {

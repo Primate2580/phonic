@@ -37,20 +37,38 @@ export function uploadImage(file, { folder, onProgress } = {}) {
   });
 }
 
-/** Upload an audio file to Cloudflare R2 through your worker. Resolves with the public URL. */
-export function uploadAudio(file, { onProgress } = {}) {
+/**
+ * Upload an audio file to Cloudflare R2 through your worker.
+ * `token` is the signed-in admin's Firebase ID token; the worker rejects uploads without it.
+ * Resolves with the public URL.
+ */
+export function uploadAudio(file, { token, onProgress } = {}) {
   return new Promise((resolve, reject) => {
+    if (!token) {
+      reject(new Error("You need to be logged in as the admin to upload audio."));
+      return;
+    }
+
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const key = `songs/${Date.now()}_${safeName}`;
 
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", `${WORKER_URL}/${key}`);
     xhr.setRequestHeader("Content-Type", file.type || "audio/mpeg");
+    xhr.setRequestHeader("Authorization", `Bearer ${token}`);
 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) onProgress?.(Math.round((e.loaded / e.total) * 100));
     };
     xhr.onload = () => {
+      if (xhr.status === 401) {
+        reject(
+          new Error(
+            "The upload worker rejected this account. Log in with the admin email and check the worker's ADMIN_EMAIL.",
+          ),
+        );
+        return;
+      }
       if (xhr.status < 200 || xhr.status >= 300) {
         reject(new Error(`Audio upload failed (${xhr.status}). ${xhr.responseText || ""}`.trim()));
         return;
@@ -64,7 +82,11 @@ export function uploadAudio(file, { onProgress } = {}) {
       }
     };
     xhr.onerror = () =>
-      reject(new Error("Network error while uploading audio. Check the worker URL and its CORS settings."));
+      reject(
+        new Error(
+          "Network error while uploading audio. Check the worker URL, and that the worker is deployed with the Authorization header allowed in CORS.",
+        ),
+      );
     xhr.send(file);
   });
 }
